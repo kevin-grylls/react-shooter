@@ -1,24 +1,15 @@
 import React, { useEffect, useState } from "react";
-
-const Target = ({ x, y, size = 100 }) => {
-  x = x * (size / 100);
-  y = y * (size / 100);
-
-  return (
-    <div
-      className="target"
-      style={{
-        zIndex: size,
-        width: size,
-        height: size,
-        transform: `translate3d(${x}px, ${y}px, 0)`,
-      }}
-    />
-  );
-};
+import { Target } from "./Target";
+import _ from "lodash";
 
 export const App = () => {
   const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [targets, setTargets] = useState([
+    { _id: 2, x: 300, y: 300, size: 100 },
+    { _id: 3, x: 500, y: 300, size: 150 },
+    { _id: 1, x: 500, y: 500, size: 200 },
+    { _id: 4, x: 300, y: 500, size: 300 },
+  ]);
 
   useEffect(() => {
     let isPointerLocked = false;
@@ -50,10 +41,23 @@ export const App = () => {
   return (
     <>
       <div className="crosshair" />
-      <Target x={300 - pos.x} y={300 - pos.y} size={100} />
-      <Target x={500 - pos.x} y={300 - pos.y} size={150} />
-      <Target x={500 - pos.x} y={500 - pos.y} size={200} />
-      <Target x={300 - pos.x} y={500 - pos.y} size={250} />
+      {_.map(targets, (target) => {
+        return (
+          <Target
+            onClick={(_id) => {
+              const i = _.findIndex(targets, { _id });
+              const postTarget = targets.slice(0);
+              postTarget.splice(i, 1);
+              setTargets(postTarget);
+            }}
+            key={target._id}
+            _id={target._id}
+            x={target.x - pos.x}
+            y={target.y - pos.y}
+            size={target.size}
+          />
+        );
+      })}
     </>
   );
 };
