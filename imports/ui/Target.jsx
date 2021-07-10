@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from "react";
 
-export const Target = ({ _id, x, y, size = 100, onClick }) => {
+export const Target = ({ _id, color, x, y, scale, size = 100, onClick }) => {
   x = x * (size / 100);
   y = y * (size / 100);
 
@@ -31,10 +31,11 @@ export const Target = ({ _id, x, y, size = 100, onClick }) => {
     <div
       className="target"
       style={{
+        backgroundColor: color || "white",
         zIndex: size,
         width: size,
         height: size,
-        transform: `translate3d(${x}px, ${y}px, 0)`,
+        transform: `translate3d(${x}px, ${y}px, 0) scale(${scale})`,
       }}
     />
   );

@@ -1,21 +1,32 @@
 import React, { useEffect, useState } from "react";
-import { Target } from "./Target";
+import { Transition, animated } from "react-spring";
 import _ from "lodash";
+import { withTracker } from "meteor/react-meteor-data";
 
-export const App = () => {
+import { Target } from "./Target";
+import { GameCollection } from "../api/game.collection";
+import { PlayerNameForm } from "./PlayerNameForm";
+import { PlayerList } from "./PlayerList";
+
+const AnimatedTarget = animated(Target);
+
+export const App = (props) => {
   const [pos, setPos] = useState({ x: 0, y: 0 });
-  const [targets, setTargets] = useState([
-    { _id: 2, x: 300, y: 300, size: 100 },
-    { _id: 3, x: 500, y: 300, size: 150 },
-    { _id: 1, x: 500, y: 500, size: 200 },
-    { _id: 4, x: 300, y: 500, size: 300 },
-  ]);
+  const [playerId, setPlayerId] = useState(null);
 
   useEffect(() => {
+    setInterval(function () {
+      const gameId = props.gameId;
+
+      if (gameId) {
+        Meteor.call("game.ping", gameId);
+      }
+    }, 5000);
+
     let isPointerLocked = false;
 
     window.addEventListener("click", () => {
-      if (!isPointerLocked) {
+      if (!isPointerLocked && playerId) {
         document.body.requestPointerLock();
       }
     });
@@ -24,40 +35,72 @@ export const App = () => {
       isPointerLocked = document.pointerLockElement === document.body;
     });
 
+    let x = 0,
+      y = 0;
     window.addEventListener("mousemove", (evt) => {
       if (isPointerLocked) {
-        setPos((prevState) => {
-          const { x, y } = prevState;
-
-          return {
-            x: x + evt.movementX,
-            y: y + evt.movementY,
-          };
-        });
+        x += evt.movementX;
+        y += evt.movementY;
       }
     });
-  }, []);
+
+    const animation = () => {
+      if (x !== pos.x || y !== pos.y) setPos({ x, y });
+
+      window.requestAnimationFrame(animation);
+    };
+
+    window.requestAnimationFrame(animation);
+  }, [playerId]);
 
   return (
     <>
-      <div className="crosshair" />
-      {_.map(targets, (target) => {
-        return (
-          <Target
-            onClick={(_id) => {
-              const i = _.findIndex(targets, { _id });
-              const postTarget = targets.slice(0);
-              postTarget.splice(i, 1);
-              setTargets(postTarget);
+      {playerId ? (
+        <>
+          <div className="crosshair" />
+          <PlayerList players={props.game.players} />
+          <Transition
+            native
+            items={props.game.targets}
+            from={{ scale: 0 }}
+            enter={{ scale: 1 }}
+            leave={{ scale: 0 }}
+          >
+            {({ scale }, target) => {
+              return (
+                <AnimatedTarget
+                  scale={scale}
+                  onClick={(_id) =>
+                    Meteor.call("game.targetHit", props.game._id, _id, playerId)
+                  }
+                  key={target._id}
+                  _id={target._id}
+                  color={target.color}
+                  x={target.x - pos.x}
+                  y={target.y - pos.y}
+                  size={target.size}
+                />
+              );
             }}
-            key={target._id}
-            _id={target._id}
-            x={target.x - pos.x}
-            y={target.y - pos.y}
-            size={target.size}
-          />
-        );
-      })}
+          </Transition>
+        </>
+      ) : (
+        <PlayerNameForm
+          onSubmit={(name) =>
+            Meteor.call(
+              "game.addPlayer",
+              props.game._id,
+              name,
+              (err, playerId) => setPlayerId(playerId),
+            )
+          }
+        />
+      )}
     </>
   );
 };
+
+export const AppWithTracker = withTracker(({ gameId }) => {
+  const game = GameCollection.findOne({ _id: gameId }) || { targets: [] };
+  return { game };
+})(App);

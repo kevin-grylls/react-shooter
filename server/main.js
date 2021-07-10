@@ -1,31 +1,19 @@
-import { Meteor } from 'meteor/meteor';
-import { LinksCollection } from '/imports/api/links';
+import { Meteor } from "meteor/meteor";
 
-function insertLink({ title, url }) {
-  LinksCollection.insert({title, url, createdAt: new Date()});
-}
+import { GameCollection } from "/imports/api/game.collection";
+import "/imports/api/game.methods";
 
 Meteor.startup(() => {
-  // If the Links collection is empty, add some data.
-  if (LinksCollection.find().count() === 0) {
-    insertLink({
-      title: 'Do the Tutorial',
-      url: 'https://www.meteor.com/tutorials/react/creating-an-app'
-    });
-
-    insertLink({
-      title: 'Follow the Guide',
-      url: 'http://guide.meteor.com'
-    });
-
-    insertLink({
-      title: 'Read the Docs',
-      url: 'https://docs.meteor.com'
-    });
-
-    insertLink({
-      title: 'Discussions',
-      url: 'https://forums.meteor.com'
-    });
-  }
+  //   if (GameCollection.find().count() === 0) {
+  //     GameCollection.insert({
+  //       lastTargetId: 4,
+  //       targets: [
+  //         { _id: 2, x: 300, y: 300, size: 100 },
+  //         { _id: 3, x: 500, y: 300, size: 150 },
+  //         { _id: 1, x: 500, y: 500, size: 200 },
+  //         { _id: 4, x: 300, y: 500, size: 300 },
+  //       ],
+  //     });
+  //   }
 });
+//   // If the Links collection is empty, add some data.
